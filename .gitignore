@@ -1,0 +1,21 @@
+# 本机配置：SDK 路径、订阅服务器 ApiKey、发布签名 —— 一律不入库
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Gradle / IDE
+.gradle/
+build/
+app/build/
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# 前端产物由 tools/sync-web.ps1 从 WPEProxyCap.Web 镜像进来，入库（不装 Node 也能编 APK）；这里只忽略临时文件
+app/src/main/assets/www/*.map
+
+# 打包输出
+dist/

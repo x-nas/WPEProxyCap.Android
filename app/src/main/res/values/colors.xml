@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 与 WPEProxyCap.Web 的 tokens.css 同值：深色底色（black 令牌）、浅色底色（black 令牌的浅色值）、强调色（green 令牌）。
+         注意 XML 注释里不能出现连续两个减号，所以这里不写 CSS 变量名本身。 -->
+    <color name="wpc_black">#0A0A0F</color>
+    <color name="wpc_light">#EEF1F6</color>
+    <color name="wpc_green">#00FF88</color>
+    <color name="wpc_icon_bg">#0A0A0F</color>
+</resources>

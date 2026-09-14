@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel">Connection status</string>
+    <string name="notif_channel_desc">Shown while connected so Android keeps the proxy running in the background</string>
+    <string name="notif_connected">Connected</string>
+    <string name="notif_connecting">Connecting…</string>
+    <string name="notif_reconnecting">Network changed, re-registering…</string>
+    <string name="notif_disconnect">Disconnect</string>
+    <string name="webview_too_old">Android System WebView is too old (version %1$d, %2$d or later required). Update "Android System WebView" or "Chrome" and open the app again.</string>
+    <string name="webview_update">Update</string>
+</resources>

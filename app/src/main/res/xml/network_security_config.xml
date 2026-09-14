@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 9 起默认禁止明文 HTTP。订阅服务器（http://www.wpe64.com:8081）和节点列表（http://节点IP:端口/ProxyCap/*）
+  都是明文 HTTP，而节点 IP 由订阅号决定、事先不知道，没法按域名逐个放行，只能在这里整体放开。
+  界面本身走 WebViewAssetLoader 的 https 虚拟域，不受影响。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

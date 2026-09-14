@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      窗口底色与界面深色令牌 black（#0a0a0f）一致：WebView 画出第一帧之前露的就是它，
+      不然冷启动先闪一下白。浅色主题由 MainActivity 在收到 setAppearance 后换底色。
+    -->
+    <style name="Theme.Wpc" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/wpc_black</item>
+        <item name="android:colorBackground">@color/wpc_black</item>
+        <item name="android:colorAccent">@color/wpc_green</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

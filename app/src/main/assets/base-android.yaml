@@ -1,0 +1,90 @@
+# WPEProxyCap.Android 的 mihomo 配置模板 —— 与 Windows 版 App/App_Data/base.yaml 对应。
+# 占位符由 ConfigBuilder 填：{server} {port} {username} {password}；rules: 段追加在文件末尾。
+# tun.file-descriptor 不写在这里：内核封装（core/wpccore.go）启动时把 VpnService 的描述符填进去。
+#
+# 与 Windows 版的差别（每一条都有原因，改之前先看）：
+#   · 没有 port / socks-port / external-controller：手机上不开任何本地监听，流量与内存直接读内核统计；
+#   · tun 只接 VpnService 建好的隧道：auto-route / auto-detect-interface 关掉，路由与 DNS 服务器由 VpnService.Builder 负责；
+#     mtu 与 inet4/inet6 地址必须与 WpcVpnService 里 Builder 的设置一致；
+#   · ipv6: false + dns.ipv6: false：不回 AAAA，应用走 IPv4 经 SOCKS5（WPE 的 UDP 中继只支持 IPv4）；
+#     隧道仍然接管 IPv6 路由，免得直接写 IPv6 地址的连接绕过代理；
+#   · sniffer：用户开了系统的「私人 DNS」时解析不经过 53 端口，fake-ip 失效，靠嗅探把域名补回来，域名规则才命中；
+#     override-destination 关着 —— 只用来匹配规则，不改连接的目标；
+#   · find-process-mode: off：手机上按应用分流由「分应用代理」在 VpnService 那一层做，PROCESS-NAME 规则会被跳过；
+#   · fake-ip-filter 多了各家手机的联网检测域名：它们拿到假地址会让状态栏显示「网络不可用」。
+mode: rule
+log-level: warning
+ipv6: false
+allow-lan: false
+find-process-mode: off
+unified-delay: true
+
+tun:
+  enable: true
+  stack: gvisor
+  auto-route: false
+  auto-detect-interface: false
+  mtu: 9000
+  inet4-address:
+    - 172.19.0.1/30
+  inet6-address:
+    - fdfe:dcba:9876::1/126
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+sniffer:
+  enable: true
+  override-destination: false
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+
+dns:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    # ===== 微信 / 腾讯登录 =====
+    - '+.weixin.qq.com'
+    - '+.wechat.com'
+    - '+.qq.com'
+    - '+.tencent.com'
+    # ===== 本地 / 局域网 =====
+    - 'localhost'
+    - '*.local'
+    - '*.lan'
+    # ===== 手机联网检测（拿到假地址会显示「网络不可用」）=====
+    - 'connectivitycheck.gstatic.com'
+    - 'connectivitycheck.android.com'
+    - 'www.google.com'
+    - '+.connectivitycheck.platform.hicloud.com'
+    - 'connect.rom.miui.com'
+    - 'conn1.oppomobile.com'
+    - 'conn2.oppomobile.com'
+    - 'wifi.vivo.com.cn'
+    - 'noisyfox.cn'
+    # ===== 时间同步 / STUN =====
+    - 'ntp.*.com'
+    - 'time.*.com'
+    - '+.pool.ntp.org'
+    - '*.stun.*.*.*'
+    - 'stun.*.*.*.*'
+  nameserver:
+    - 223.5.5.5                  # 阿里 DNS
+    - 119.29.29.29               # 腾讯 DNS
+    - 114.114.114.114            # 114 DNS
+
+proxies:
+  - name: PROXY
+    type: socks5
+    server: {server}
+    port: {port}
+    username: {username}
+    password: {password}
+    udp: true

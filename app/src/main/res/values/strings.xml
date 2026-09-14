@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WPE Proxy Cap</string>
+    <string name="notif_channel">连接状态</string>
+    <string name="notif_channel_desc">连接期间常驻，系统据此让代理在后台持续运行</string>
+    <string name="notif_connected">已连接</string>
+    <string name="notif_connecting">正在连接…</string>
+    <string name="notif_reconnecting">网络变化，正在重新注册…</string>
+    <string name="notif_disconnect">断开</string>
+    <string name="webview_too_old">系统 WebView 版本过低（当前 %1$d，需要 %2$d 以上）。请在应用商店更新「Android System WebView」或「Chrome」后重新打开。</string>
+    <string name="webview_update">去更新</string>
+</resources>
