@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WPE Proxy Cap</string>
+    <string name="app_name">WPC</string>
     <string name="notif_channel">连接状态</string>
     <string name="notif_channel_desc">连接期间常驻，系统据此让代理在后台持续运行</string>
     <string name="notif_connected">已连接</string>

@@ -5,5 +5,6 @@
     <color name="wpc_black">#0A0A0F</color>
     <color name="wpc_light">#EEF1F6</color>
     <color name="wpc_green">#00FF88</color>
-    <color name="wpc_icon_bg">#0A0A0F</color>
+    <!-- 启动图标底色：图标用 WPE 的黑礼帽，深色底上看不清，所以取浅色底色 -->
+    <color name="wpc_icon_bg">#EEF1F6</color>
 </resources>
