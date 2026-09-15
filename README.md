@@ -60,7 +60,7 @@ bash tools/build-core.sh
 
 本机配置（都不入库）：
 
-- `local.properties`：`sdk.dir=…`；`wpc.apiKey=…`（订阅服务器的 X-Api-Key，不填也能编译，但无法兑换订阅号）。
+- `local.properties`：`sdk.dir=…`；`wpc.apiKey=…`（订阅服务器的 X-Api-Key，不填也能编译，但无法兑换订阅号；构建时拆成两段异或存进 BuildConfig，APK 里没有明文字符串，由 `service/ApiKey.kt` 运行时拼回）。
 - `keystore.properties`：`storeFile` / `storePassword` / `keyAlias` / `keyPassword`。
 
 ⚠️ **发布签名的密钥一旦用了就永远不要换。** ANDROID_ID 按签名密钥区分，换密钥发版会让所有用户在 WPE 那边变成新设备，可能撞上账号的设备数上限。

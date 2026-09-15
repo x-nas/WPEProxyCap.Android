@@ -1,3 +1,4 @@
+import java.security.SecureRandom
 import java.util.Properties
 
 plugins {
@@ -25,6 +26,12 @@ val keystoreProps = Properties().apply {
 
 val apiKey: String = (localProps.getProperty("wpc.apiKey") ?: System.getenv("WPC_API_KEY") ?: "").trim()
 
+// ApiKey 不以字符串进 APK：拆成两段异或（A = key XOR B，B 每次构建随机），运行时由 service/ApiKey.kt 拼回。
+// 与 Windows 版 ProxyService.ApiKey() 同一种做法 —— 只挡「解压 APK 搜字符串」，挡不住反编译。
+val apiKeyB: ByteArray = ByteArray(apiKey.length).also { SecureRandom().nextBytes(it) }
+val apiKeyA: ByteArray = apiKey.toByteArray(Charsets.US_ASCII).mapIndexed { i, c -> (c.toInt() xor apiKeyB[i].toInt()).toByte() }.toByteArray()
+fun javaBytes(b: ByteArray): String = b.joinToString(",", "new byte[]{", "}") { "(byte)0x%02X".format(it.toInt() and 0xFF) }
+
 android {
     namespace = "com.wpe64.wpc"
     compileSdk = 36
@@ -39,7 +46,8 @@ android {
         // ABI 只在下面的 splits 里限定（arm64-v8a 给真机、x86_64 给模拟器）。
         // ⚠️ AGP 9 不允许 ndk.abiFilters 与 splits.abi 同时设置，别在这里再写一遍。
 
-        buildConfigField("String", "WPC_API_KEY", "\"" + apiKey.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
+        buildConfigField("byte[]", "WPC_KEY_A", javaBytes(apiKeyA))
+        buildConfigField("byte[]", "WPC_KEY_B", javaBytes(apiKeyB))
         buildConfigField("String", "KERNEL_VERSION", "\"v1.19.21\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

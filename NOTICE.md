@@ -22,5 +22,5 @@ APK 里包含下列第三方组件：
 2. `web-commit.txt` 里记下的 WPEProxyCap.Web 提交；
 3. 上表中 mihomo 的 tag 与 `core/go.sum` 锁定的依赖版本。
 
-订阅服务器的 ApiKey 不在源码里（构建时从 `local.properties` 的 `wpc.apiKey` 注入）。自行编译的版本拿不到它，
+订阅服务器的 ApiKey 不在源码里（构建时从 `local.properties` 的 `wpc.apiKey` 注入，拆成两段异或存放）。自行编译的版本拿不到它，
 能连接 WPE、能用本机调试订阅号，但无法向官方订阅服务器兑换订阅号。

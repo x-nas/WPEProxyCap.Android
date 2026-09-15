@@ -74,7 +74,7 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
 
     val store = ConfigStore(context)
     private val cfg get() = store.config
-    private val api = WpcApi(BuildConfig.WPC_API_KEY)
+    private val api = WpcApi(ApiKey.get())
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // ———————————————— 与界面的连线（MainActivity 挂上 / 摘下）————————————————
