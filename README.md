@@ -19,6 +19,15 @@ VpnService 建隧道 ──▶ 进程内 mihomo（TUN 描述符）──▶ SOCK
 - 控制连接断了（切网、短暂冻结）先静默重注册，拿到新令牌后热换配置，不重建隧道；重试失败才断开。
 - 分应用代理：全部应用，或只让选中的应用走代理。
 
+## 界面
+
+共用前端里的手机版界面（`AppMobile.vue` 与 `components/mobile/`，细节见 [WPEProxyCap.Web](https://github.com/x-nas/WPEProxyCap.Web)）：
+
+- **首次使用只填订阅号**；账号密码直接在「加速」页填（有节点后才显示账号卡，找回密码 / 立即注册的地址取自所选节点）。
+- 四个标签：**加速**（反应堆核心就是连接按钮，已连接时显示计时与读数）· **节点**（按延迟排序、重新测速，顶部一行「订阅号」用来更换订阅）· **消息**（全部公告一个列表）· **我的**（账号、后台运行、系统日志、系统信息、外观、教程与协议）。
+- 加速页与「我的」页按屏幕高度自适应，尽量一屏放下；宽度 ≥ 600（平板 / 横屏）换成左侧导航栏，≥ 840 分两栏。
+- 安全验证的结果与进度原生侧只发代码（`ProxyService.verifyProxy` / `testSocks5` / `registerKey`），界面按当前语言翻译；代码表与 Windows 版一致，改一边要改另一边。
+
 ## 目录
 
 ```
@@ -84,5 +93,5 @@ WPC_INTEROP_SOCKS=<端口> WPC_INTEROP_ECHO=<端口> ./gradlew testDebugUnitTest
 
 ## 系统要求
 
-- Android 8.0（API 26）及以上，arm64-v8a（x86_64 包给模拟器用）。
+- Android 8.0（API 26）及以上，arm64-v8a。`pack.cmd` 只输出 arm64 包；`assembleRelease` 另外会出一个 x86_64 包，给不能运行 ARM 应用的模拟器自测用，不对外发布。
 - Android System WebView 90 及以上（没有 Google 服务的机器请在应用商店更新 WebView）。
