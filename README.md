@@ -58,6 +58,8 @@ bash tools/build-core.sh
 ./gradlew assembleRelease          # 需要 keystore.properties 才会签名
 ```
 
+**一键出发布包（Windows）**：双击仓库根目录的 `pack.cmd`（= `tools/pack/Pack.ps1`）。它依次检查 `local.properties` / `keystore.properties`、同步前端、跑单元测试、`clean assembleRelease`，再核对签名指纹与密钥一致、APK 里有内核与界面、没有明文 ApiKey，最后输出 `dist/WPC Android v<版本>.apk` 与 `.sha256.txt` 并打开 `dist` 目录。参数 `-SkipWeb`（不重新构建前端）、`-SkipTests`（不跑测试）原样透传。内核 AAR 不在这里重编。
+
 本机配置（都不入库）：
 
 - `local.properties`：`sdk.dir=…`；`wpc.apiKey=…`（订阅服务器的 X-Api-Key，不填也能编译，但无法兑换订阅号；构建时拆成两段异或存进 BuildConfig，APK 里没有明文字符串，由 `service/ApiKey.kt` 运行时拼回）。
