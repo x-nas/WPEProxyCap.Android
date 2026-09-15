@@ -585,6 +585,19 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
         RegisterCode.Protocol -> "代理服务器：控制通道协议错误"
     }
 
+    // 注册结果给界面的代码（前端按界面语言翻成 vf.r.*）；上面的中文只写系统日志，界面直接显示会在英文等界面上冒中文
+    private fun registerKey(code: RegisterCode): String = when (code) {
+        RegisterCode.OK -> "okDevice"
+        RegisterCode.BadCredential -> "badAuth"
+        RegisterCode.Expired -> "expired"
+        RegisterCode.Disabled -> "disabled"
+        RegisterCode.DeviceLimit -> "deviceLimit"
+        RegisterCode.AuthOff -> "authOff"
+        RegisterCode.BadRequest -> "badRequest"
+        RegisterCode.Timeout -> "regTimeout"
+        RegisterCode.Protocol -> "protocol"
+    }
+
     private fun markDisconnected() {
         if (!isConnected) return
         isConnected = false
@@ -594,8 +607,12 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
 
     // ———————————————— 安全验证 ————————————————
 
+    /*
+      返回 { success, error, code }：界面按 code 翻译（vf.r.*），error 是给日志与老前端的中文原文。
+      进度事件 verifyProgress 也只发代码（server / handshake / auth / device → vf.p.*）。与 Windows 版 ProxyService.VerifyProxyAsync 同一张代码表。
+    */
     suspend fun verifyProxy(): JSONObject = withContext(Dispatchers.IO) {
-        val server = selected ?: return@withContext JSONObject().put("success", false).put("error", "未选择服务器")
+        val server = selected ?: return@withContext JSONObject().put("success", false).put("error", "未选择服务器").put("code", "noServer")
 
         lastDelay = Net.tcpDelay(server.serverIP, server.serverPort, TIMEOUT)
 
@@ -603,32 +620,33 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
         if (isConnected && control?.isConnected == true) {
             val live = "设备已注册，控制通道正常，账号密码安全验证已通过"
             log(LogType.Debug, "System", live)
-            return@withContext JSONObject().put("success", true).put("error", live)
+            return@withContext JSONObject().put("success", true).put("error", live).put("code", "live")
         }
 
         val user = credentials?.user ?: cfg.userName
         val pass = credentials?.pass ?: cfg.passWord
 
-        emit("verifyProgress", "正在验证服务器响应...")
+        emit("verifyProgress", "server")
         val (mode, c) = WpcControlClient.negotiate(server.serverIP, server.serverPort, TIMEOUT, { s -> log(LogType.Debug, "WpcControlClient", s) })
 
-        val (ok, msg) = if (mode == WpcControlClient.Mode.Control && c != null) {
-            emit("verifyProgress", "正在验证账号密码与设备...")
+        val (ok, msg, key) = if (mode == WpcControlClient.Mode.Control && c != null) {
+            emit("verifyProgress", "device")
             val r = c.register(user, pass, DeviceFingerprint.id(context), version, osLabel(), TIMEOUT)
             c.close()
-            (r.code == RegisterCode.OK) to registerMessage(r.code)
+            Triple(r.code == RegisterCode.OK, registerMessage(r.code), registerKey(r.code))
         } else {
             testSocks5(server.serverIP, server.serverPort, user, pass)
         }
 
         log(if (ok) LogType.Debug else LogType.Error, "System", if (ok) "服务器安全验证通过" else msg)
-        JSONObject().put("success", ok).put("error", msg)
+        JSONObject().put("success", ok).put("error", msg).put("code", key)
     }
 
-    private fun testSocks5(ip: String, port: Int, user: String, pass: String): Pair<Boolean, String> {
+    /** 返回 (是否通过, 中文原文给日志, 界面代码 vf.r.*)。 */
+    private fun testSocks5(ip: String, port: Int, user: String, pass: String): Triple<Boolean, String, String> {
         return try {
             Socket().use { s ->
-                emit("verifyProgress", "正在验证服务器响应...")
+                emit("verifyProgress", "server")
                 s.connect(InetSocketAddress(ip, port), TIMEOUT)
                 s.soTimeout = TIMEOUT
                 val out = s.getOutputStream()
@@ -636,15 +654,15 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
 
                 out.write(byteArrayOf(0x05, 0x02, 0x00, 0x02))
                 out.flush()
-                emit("verifyProgress", "正在检测代理连接状态...")
+                emit("verifyProgress", "handshake")
 
                 val r = ByteArray(2)
-                if (WpcControlClient.readFully(inp, r, 2) < 2 || r[0] != 0x05.toByte()) return false to "代理服务器：SOCKS5 协议不支持"
+                if (WpcControlClient.readFully(inp, r, 2) < 2 || r[0] != 0x05.toByte()) return Triple(false, "代理服务器：SOCKS5 协议不支持", "noSocks5")
 
-                emit("verifyProgress", "正在验证账号密码...")
+                emit("verifyProgress", "auth")
                 when (r[1].toInt()) {
                     0x02 -> {
-                        if (user.isBlank()) return false to "代理服务器：需要认证但未提供用户名"
+                        if (user.isBlank()) return Triple(false, "代理服务器：需要认证但未提供用户名", "noUser")
                         val u = user.toByteArray(Charsets.UTF_8)
                         val p = pass.toByteArray(Charsets.UTF_8)
                         val pkt = ByteArray(3 + u.size + p.size)
@@ -656,16 +674,16 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
                         out.write(pkt)
                         out.flush()
                         val a = ByteArray(2)
-                        if (WpcControlClient.readFully(inp, a, 2) < 2 || a[1] != 0x00.toByte()) return false to "代理服务器：用户名或密码错误"
+                        if (WpcControlClient.readFully(inp, a, 2) < 2 || a[1] != 0x00.toByte()) return Triple(false, "代理服务器：用户名或密码错误", "badAuth")
                     }
                     0x00 -> Unit
-                    else -> return false to "代理服务器：不支持的认证方式"
+                    else -> return Triple(false, "代理服务器：不支持的认证方式", "badMethod")
                 }
-                true to "代理服务器连接正常，账号密码安全验证已通过"
+                Triple(true, "代理服务器连接正常，账号密码安全验证已通过", "ok")
             }
         } catch (e: Exception) {
             log(LogType.Error, "testSocks5", e.message ?: "")
-            false to "代理服务器不可用，请检查网络后重试"
+            Triple(false, "代理服务器不可用，请检查网络后重试", "unavailable")
         }
     }
 
