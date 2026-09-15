@@ -51,6 +51,42 @@ class ConfigBuilderTest {
         assertEquals("BAD-RULE,x,PROXY", res.skipped.single().rule)
     }
 
+    private fun rule(type: RuleType, arg: String, action: RuleAction) = RuleInfo(type, type.keyword, arg, action)
+
+    @Test
+    fun phoneSummaryCountsNoProxyWhenOnlyProcessRulesProxy() {
+        // Windows 上这个节点只让 game.exe 走代理；手机上进程名规则被跳过，只剩全部直连
+        val s = ConfigBuilder.phoneSummary(listOf(
+            rule(RuleType.PROCESS_NAME, "game.exe", RuleAction.PROXY),
+            rule(RuleType.MATCH, "", RuleAction.DIRECT),
+        ))
+        assertEquals(ConfigBuilder.PhoneSummary(total = 2, kept = 1, skipped = 1, proxy = 0), s)
+    }
+
+    @Test
+    fun phoneSummaryCountsProxyRulesThatSurviveFiltering() {
+        val s = ConfigBuilder.phoneSummary(listOf(
+            rule(RuleType.DOMAIN_SUFFIX, "game.example.com", RuleAction.PROXY),
+            rule(RuleType.IP_CIDR, "1.2.3.0/24,no-resolve", RuleAction.PROXY),
+            rule(RuleType.PROCESS_PATH, "C:\\game.exe", RuleAction.PROXY),
+            rule(RuleType.MATCH, "", RuleAction.DIRECT),
+        ))
+        assertEquals(ConfigBuilder.PhoneSummary(total = 4, kept = 3, skipped = 1, proxy = 2), s)
+        assertEquals(ConfigBuilder.PhoneSummary(0, 0, 0, 0), ConfigBuilder.phoneSummary(emptyList()))
+    }
+
+    @Test
+    fun proxyLineCountReadsTheActionNotTheArgument() {
+        val lines = listOf(
+            "IP-CIDR,1.2.3.0/24,PROXY,no-resolve",
+            "AND,((DOMAIN,proxy.example.com),(NETWORK,UDP)),PROXY",
+            "DOMAIN-KEYWORD,PROXY,DIRECT",
+            "MATCH,DIRECT",
+        )
+        assertEquals(2, ConfigBuilder.proxyLineCount(lines))
+        assertEquals(0, ConfigBuilder.proxyLineCount(listOf("MATCH,DIRECT")))
+    }
+
     @Test
     fun kernelFilterIsANoOpWhenTheWholeConfigIsFine() {
         var calls = 0

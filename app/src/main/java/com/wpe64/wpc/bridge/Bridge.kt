@@ -108,6 +108,7 @@ class Bridge(
         "checkWpeServer" -> svc.checkWpeServer()
         "checkSubscriberServer" -> svc.checkSubscriberServer()
         "getServers" -> svc.getServers()
+        "testServerDelays" -> svc.testServerDelays()
         "getNotices" -> svc.getNotices()
         "getMihomoVersion" -> svc.kernelVersion()
         "getOsVersion" -> svc.osVersion()

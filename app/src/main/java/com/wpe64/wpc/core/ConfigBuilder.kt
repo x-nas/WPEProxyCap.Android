@@ -37,6 +37,31 @@ object ConfigBuilder {
         return Rules(lines, skipped)
     }
 
+    /**
+     * 这组规则在手机上的概况，给界面在连接前提示「这个节点在手机上不会代理任何流量」。
+     * total = WPE 下发的条数；kept / skipped = 按 RuleFormat 筛完留下 / 跳过的条数（不含没规则时补的那条全部直连）；
+     * proxy = 留下的里面动作是 PROXY 的条数。为 0 时连上也没有流量经过 WPE。
+     * 连接时内核解析器可能再摘掉几条，那一步的结果以 buildConfig 里的 proxyLineCount 为准。
+     */
+    data class PhoneSummary(val total: Int, val kept: Int, val skipped: Int, val proxy: Int)
+
+    fun phoneSummary(rules: List<RuleInfo>): PhoneSummary {
+        var kept = 0
+        var proxy = 0
+        for (r in rules) {
+            val line = RuleFormat.format(r).line ?: continue
+            kept++
+            if (isProxyLine(line)) proxy++
+        }
+        return PhoneSummary(rules.size, kept, rules.size - kept, proxy)
+    }
+
+    /** 规则行里动作是 PROXY 的条数。动作是最后一段；「地址,动作,no-resolve」要先去掉 no-resolve。 */
+    fun proxyLineCount(lines: List<String>): Int = lines.count(::isProxyLine)
+
+    private fun isProxyLine(line: String): Boolean =
+        line.trim().removeSuffix(",no-resolve").substringAfterLast(',').trim() == RuleAction.PROXY.name
+
     fun build(template: String, input: Input, ruleLines: List<String>): String {
         val body = template
             .replace("{server}", yamlQuote(input.server))

@@ -30,6 +30,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -68,6 +71,8 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
 
     companion object {
         private const val TIMEOUT = 5000
+        /** 节点测速只看通不通、快不快：3 秒还连不上就算不通，免得一个死节点拖住整页 */
+        private const val DELAY_TIMEOUT = 3000
         private const val HEALTH_SECONDS = 3 * 3600.0
         private val RE_REGISTER_WAITS = longArrayOf(0L, 2_000L, 5_000L, 10_000L, 20_000L)
     }
@@ -172,6 +177,9 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
         .put("forgotURL", s.forgotURL)
         .put("registerURL", s.registerURL)
         .put("verifyURL", s.verifyURL)
+        .put("phoneRules", ConfigBuilder.phoneSummary(s.rules).let { p ->
+            JSONObject().put("total", p.total).put("kept", p.kept).put("skipped", p.skipped).put("proxy", p.proxy)
+        })
 
     private fun noticeJson(n: NoticeInfo): JSONObject = JSONObject()
         .put("noticeType", n.noticeType)
@@ -213,6 +221,15 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
         selected = list.firstOrNull { it.serverId == prev } ?: list.firstOrNull()
 
         JSONArray().apply { list.forEach { put(serverJson(it)) } }
+    }
+
+    /** 各节点的 TCP 延迟（ms，-1 = 不通），并行测。节点页「重新测速」与每次刷新订阅之后调用。 */
+    suspend fun testServerDelays(): JSONArray = withContext(Dispatchers.IO) {
+        val list = servers
+        val delays = coroutineScope {
+            list.map { s -> async { s.serverId to Net.tcpDelay(s.serverIP, s.serverPort, DELAY_TIMEOUT) } }.awaitAll()
+        }
+        JSONArray().apply { delays.forEach { (id, d) -> put(JSONObject().put("serverId", id).put("delay", d)) } }
     }
 
     suspend fun getNotices(): JSONArray = withContext(Dispatchers.IO) {
@@ -418,6 +435,12 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
 
         val checked = ConfigBuilder.filterWithKernel(template, input, formatted.lines) { kernel.validate(it) }
         checked.skipped.forEach { log(LogType.Warning, "System", "内核不认这条规则，已跳过：${it.rule}（${it.reason}）") }
+
+        // 一条走代理的规则都没留下：连上也不会有流量经过 WPE（常见于只按进程名写规则的节点）。不拦连接，只提醒
+        if (ConfigBuilder.proxyLineCount(checked.lines) == 0) {
+            log(LogType.Warning, "System", "节点「${server.serverName}」在手机上没有走代理的规则，连接后所有流量都会直连，不经过 WPE")
+            emit("rulesNoProxy", JSONObject().put("serverName", server.serverName))
+        }
 
         val yaml = ConfigBuilder.build(template, input, checked.lines)
         val err = kernel.validate(yaml)
