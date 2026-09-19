@@ -1,7 +1,7 @@
 # WPEProxyCap.Android
 
 WPE Proxy Cap（WPC）的 Android 客户端：用手机连接 WPE x64 的内置 SOCKS5 代理服务器，让手机上的游戏与应用经 WPE 转发（WPE 那边可以抓包、改包、走滤镜）。
-功能与 Windows 版 WPC 1.0 对应，界面是同一份（共用前端 [WPEProxyCap.Web](https://github.com/x-nas/WPEProxyCap.Web)）。
+功能与 Windows 版 WPC 1.1 对应，界面是同一份（共用前端 [WPEProxyCap.Web](https://github.com/x-nas/WPEProxyCap.Web)）。
 
 许可证：**GPL-3.0**（见 `LICENSE`，第三方组件见 `NOTICE.md`）。
 
