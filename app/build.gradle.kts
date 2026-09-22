@@ -40,8 +40,8 @@ android {
         applicationId = "com.wpe64.wpc"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         // ABI 只在下面的 splits 里限定（arm64-v8a 给真机、x86_64 给模拟器）。
         // ⚠️ AGP 9 不允许 ndk.abiFilters 与 splits.abi 同时设置，别在这里再写一遍。

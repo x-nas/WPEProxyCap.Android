@@ -258,7 +258,7 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
         return "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) · ${Build.MANUFACTURER} ${Build.MODEL}" + if (wv > 0) " · WebView $wv" else ""
     }
 
-    /** 报给 WPE 的系统标签（控制通道 Register 的 os 字段），WPE 客户端列表显示成「WPC 1.0 · Android 14」。 */
+    /** 报给 WPE 的系统标签（控制通道 Register 的 os 字段），WPE 客户端列表显示成「WPC 1.1 · Android 14」。 */
     private fun osLabel(): String = "Android ${Build.VERSION.RELEASE}"
 
     fun webViewMajor(): Int = runCatching {
