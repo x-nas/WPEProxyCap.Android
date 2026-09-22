@@ -32,7 +32,7 @@ import (
 )
 
 // KernelVersion 是编进来的 mihomo 版本，与 Windows 版 wpe-mihomo.exe 同一个 tag（改的时候两边一起改）。
-const KernelVersion = "v1.19.21"
+const KernelVersion = "v1.19.31"
 
 // LogSink 接内核日志。Kotlin 侧实现这个接口（gomobile 生成 Java 接口）。
 type LogSink interface {

@@ -48,7 +48,7 @@ android {
 
         buildConfigField("byte[]", "WPC_KEY_A", javaBytes(apiKeyA))
         buildConfigField("byte[]", "WPC_KEY_B", javaBytes(apiKeyB))
-        buildConfigField("String", "KERNEL_VERSION", "\"v1.19.21\"")
+        buildConfigField("String", "KERNEL_VERSION", "\"v1.19.31\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

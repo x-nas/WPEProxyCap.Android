@@ -6,7 +6,7 @@ APK 里包含下列第三方组件：
 
 | 组件 | 版本 | 用途 | 许可证 | 源码 |
 |---|---|---|---|---|
-| mihomo（Clash Meta 内核） | v1.19.21，未修改 | 进程内代理与规则引擎，经 `core/` 的 gomobile 封装编进 `app/libs/wpccore.aar` | GPL-3.0 | https://github.com/MetaCubeX/mihomo/tree/v1.19.21 |
+| mihomo（Clash Meta 内核） | v1.19.31，未修改 | 进程内代理与规则引擎，经 `core/` 的 gomobile 封装编进 `app/libs/wpccore.aar` | GPL-3.0 | https://github.com/MetaCubeX/mihomo/tree/v1.19.31 |
 | mihomo 的 Go 依赖 | 见 `core/go.mod`、`core/go.sum` | 同上 | 各自的许可证（MIT / BSD / Apache-2.0 / GPL 等） | 按 `go.sum` 锁定的版本 |
 | WPEProxyCap.Web | 见 `app/src/main/assets/www/web-commit.txt` | 界面前端（Vue 3） | MIT | https://github.com/x-nas/WPEProxyCap.Web |
 | Vue | 3.5 | 前端框架（已打包进上面的前端） | MIT | https://github.com/vuejs/core |

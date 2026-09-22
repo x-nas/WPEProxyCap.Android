@@ -14,7 +14,7 @@ SOCKS5 端口，私有方法 0x80 ──▶ 注册设备（账号密码 + 设备
 VpnService 建隧道 ──▶ 进程内 mihomo（TUN 描述符）──▶ SOCKS5（密码位是令牌）──▶ WPE ──▶ 互联网
 ```
 
-- 内核：mihomo v1.19.21（与 Windows 版 `wpe-mihomo.exe` 同一个 tag），`core/` 用 gomobile 编成 `app/libs/wpccore.aar`，构建标签 `with_gvisor,cmfa`。
+- 内核：mihomo v1.19.31（与 Windows 版 `wpe-mihomo.exe` 同一个 tag），`core/` 用 gomobile 编成 `app/libs/wpccore.aar`，构建标签 `with_gvisor,cmfa`。
 - 本应用自己不进隧道（`addDisallowedApplication`），到 WPE 的控制通道与数据连接天然直连，不会绕回自己。
 - 控制连接断了（切网、短暂冻结）先静默重注册，拿到新令牌后热换配置，不重建隧道；重试失败才断开。
 - 分应用代理：全部应用，或只让选中的应用走代理。

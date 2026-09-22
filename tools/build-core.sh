@@ -13,6 +13,8 @@ DEV="${WPC_ANDROID_DEV:-/c/Users/Gary/AndroidDev}"
 
 export PATH="$DEV/go/bin:$DEV/gopath/bin:$DEV/jdk/bin:$PATH"
 export GOTOOLCHAIN=local
+# proxy.golang.org 在本机不可达（被墙），默认走 goproxy.cn；可用 GOPROXY 环境变量覆盖
+export GOPROXY="${GOPROXY:-https://goproxy.cn,direct}"
 export GOPATH="${GOPATH:-$(cygpath -w "$DEV/gopath")}"
 export GOMODCACHE="${GOMODCACHE:-$GOPATH\\pkg\\mod}"
 export ANDROID_HOME="${ANDROID_HOME:-$(cygpath -w "$DEV/sdk")}"
@@ -22,7 +24,7 @@ export JAVA_HOME="${JAVA_HOME:-$(cygpath -w "$DEV/jdk")}"
 cd "$ROOT/core"
 
 echo "== go mod tidy"
-go get github.com/metacubex/mihomo@v1.19.21
+go get github.com/metacubex/mihomo@v1.19.31
 go get -tool golang.org/x/mobile/cmd/gobind@latest
 go mod tidy
 
@@ -37,7 +39,7 @@ gomobile bind \
   -javapkg com.wpe64.wpc \
   -tags with_gvisor,cmfa \
   -trimpath \
-  -ldflags "-s -w -buildid= -X github.com/metacubex/mihomo/constant.Version=1.19.21" \
+  -ldflags "-s -w -buildid= -X github.com/metacubex/mihomo/constant.Version=1.19.31" \
   -o "$ROOT/app/libs/wpccore.aar" \
   .
 
