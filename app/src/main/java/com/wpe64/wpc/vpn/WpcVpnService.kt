@@ -148,17 +148,20 @@ class WpcVpnService : VpnService() {
     private fun applyAppScope(b: Builder, req: StartRequest) {
         if (req.appProxyMode == "selected" && req.appProxyPackages.isNotEmpty()) {
             var added = 0
+            var missing = 0
             for (pkg in req.appProxyPackages) {
                 if (pkg == packageName) continue
                 try {
                     b.addAllowedApplication(pkg)
                     added++
                 } catch (_: PackageManager.NameNotFoundException) {
-                    // 选过的应用已经卸载了
+                    missing++
+                    svc.log(ProxyService.LogType.Warning, "WpcVpnService", "找不到分应用代理包：$pkg")
                 }
             }
             if (added > 0) {
-                svc.log(ProxyService.LogType.Debug, "WpcVpnService", "分应用代理：只有选中的 $added 个应用走代理")
+                val suffix = if (missing == 0) "" else "（$missing 个包不存在）"
+                svc.log(ProxyService.LogType.Debug, "WpcVpnService", "分应用代理：只有选中的 $added 个应用走代理$suffix")
                 return
             }
             svc.log(ProxyService.LogType.Warning, "WpcVpnService", "选中的应用都已卸载，本次按「全部应用」连接")

@@ -1,7 +1,7 @@
 # WPEProxyCap.Android
 
 WPE Proxy Cap（WPC）的 Android 客户端：用手机连接 WPE x64 的内置 SOCKS5 代理服务器，让手机上的游戏与应用经 WPE 转发（WPE 那边可以抓包、改包、走滤镜）。
-功能与 Windows 版 WPC 1.1 对应，界面是同一份（共用前端 [WPEProxyCap.Web](https://github.com/x-nas/WPEProxyCap.Web)）。
+功能与 Windows 版 WPC 1.1 对应，当前 Android 客户端版本为 1.2；界面是同一份（共用前端 [WPEProxyCap.Web](https://github.com/x-nas/WPEProxyCap.Web)）。
 
 许可证：**GPL-3.0**（见 `LICENSE`，第三方组件见 `NOTICE.md`）。
 
@@ -17,7 +17,14 @@ VpnService 建隧道 ──▶ 进程内 mihomo（TUN 描述符）──▶ SOCK
 - 内核：mihomo v1.19.31（与 Windows 版 `wpe-mihomo.exe` 同一个 tag），`core/` 用 gomobile 编成 `app/libs/wpccore.aar`，构建标签 `with_gvisor,cmfa`。
 - 本应用自己不进隧道（`addDisallowedApplication`），到 WPE 的控制通道与数据连接天然直连，不会绕回自己。
 - 控制连接断了（切网、短暂冻结）先静默重注册，拿到新令牌后热换配置，不重建隧道；重试失败才断开。
-- 分应用代理：全部应用，或只让选中的应用走代理。
+- 分应用代理：全部应用，或只让选中的应用走代理；支持逐个手动添加多个包名，适合没有桌面图标、未出现在列表里的组件。
+
+### 分应用代理与系统包
+
+应用列表会通过 `QUERY_ALL_PACKAGES` 查询已安装应用，并合并带启动图标的应用作为厂商兼容兜底；但 MIUI 等系统仍可能对无图标系统组件隐藏包信息。此时可在「分应用代理」中手动输入完整包名，保存后由 `VpnService.Builder.addAllowedApplication()` 校验。
+
+- 手动添加不会在运行时修改 Android 的包可见性声明；若系统仍不可见或包不存在，会跳过该包并在系统日志提示。
+- 对某个确定需要支持的隐藏系统包，才在 `AndroidManifest.xml` 的 `<queries><package>` 加精确声明，并重新签名、打包和安装。不要把某个厂商包作为默认特例。
 
 ## 界面
 

@@ -258,7 +258,7 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
         return "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) · ${Build.MANUFACTURER} ${Build.MODEL}" + if (wv > 0) " · WebView $wv" else ""
     }
 
-    /** 报给 WPE 的系统标签（控制通道 Register 的 os 字段），WPE 客户端列表显示成「WPC 1.1 · Android 14」。 */
+    /** 报给 WPE 的系统标签（控制通道 Register 的 os 字段），WPE 客户端列表显示成「WPC 1.2 · Android 14」。 */
     private fun osLabel(): String = "Android ${Build.VERSION.RELEASE}"
 
     fun webViewMajor(): Int = runCatching {
@@ -822,27 +822,40 @@ class ProxyService(private val context: Context, val kernel: Kernel = MihomoKern
         return true
     }
 
-    /** 有启动图标的应用（不含本应用）。图标画成 96px 的 PNG data URL。第一次取完缓存到进程结束。 */
+    /**
+     * 所有已安装的应用和系统服务（不含本应用）。
+     *
+     * Android 11+ 由 Manifest 的 QUERY_ALL_PACKAGES 取得包可见性；前端仍默认折叠系统项。
+     * 不能被厂商系统枚举的后台服务，可由用户在界面上手动填入包名，建隧道时再由系统校验。
+     * 图标画成 96px 的 PNG data URL。第一次取完缓存到进程结束。
+     */
     suspend fun listApps(): JSONArray = withContext(Dispatchers.IO) {
         appsCache?.let { return@withContext it }
 
         val pm = context.packageManager
-        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        val infos = pm.queryIntentActivities(intent, PackageManager.MATCH_ALL)
-        val seen = HashSet<String>()
+        // 有些 MIUI 版本对 MATCH_ALL 的返回异常地为空；0 是 Android 文档定义的普通已安装应用查询。
+        // Launcher 结果始终合并进来，确保厂商没有授予全量可见性时，普通应用列表也不会变空。
+        val installed = runCatching { pm.getInstalledApplications(0) }.getOrDefault(emptyList())
+        val launcher = runCatching {
+            val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            pm.queryIntentActivities(intent, PackageManager.MATCH_ALL)
+                .mapNotNull { it.activityInfo?.applicationInfo }
+        }.getOrDefault(emptyList())
+        val infos = LinkedHashMap<String, ApplicationInfo>(installed.size + launcher.size)
+        installed.forEach { infos[it.packageName] = it }
+        launcher.forEach { if (!infos.containsKey(it.packageName)) infos[it.packageName] = it }
         val arr = JSONArray()
 
-        for (ri in infos) {
-            val ai = ri.activityInfo?.applicationInfo ?: continue
+        for (ai in infos.values) {
             val pkg = ai.packageName
-            if (pkg == context.packageName || !seen.add(pkg)) continue
-            val system = (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0 && (ai.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0
+            if (pkg == context.packageName) continue
+            val system = (ai.flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
             arr.put(
                 JSONObject()
                     .put("pkg", pkg)
-                    .put("label", ri.loadLabel(pm).toString())
+                    .put("label", ai.loadLabel(pm).toString().ifBlank { pkg })
                     .put("system", system)
-                    .put("icon", runCatching { iconDataUrl(ri.loadIcon(pm)) }.getOrDefault("")),
+                    .put("icon", runCatching { iconDataUrl(ai.loadIcon(pm)) }.getOrDefault("")),
             )
         }
 

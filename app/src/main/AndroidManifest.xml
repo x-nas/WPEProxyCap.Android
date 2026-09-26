@@ -8,11 +8,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-
     <!--
-      分应用代理只列「有启动图标的应用」：声明这条 queries 就能查到它们，
-      不需要 QUERY_ALL_PACKAGES（那个权限在应用商店审核里要单独说明理由）。
+      分应用代理需要把用户选中的包交给 VpnService.Builder；因此需要取得完整安装包列表。
+      此权限受 Google Play 审核限制；本项目通过官网/网盘分发，发布时仍须如实说明用途。
     -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <!-- MIUI 对 QUERY_ALL_PACKAGES 的实现存在差异时，至少保证带启动图标的普通应用仍可见。 -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
